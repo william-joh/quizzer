@@ -11,7 +11,7 @@ import (
 	"github.com/william-joh/quizzer/server/internal/postgres"
 )
 
-func setupTestDB(t *testing.T) postgres.Session {
+func setupTestDB(t *testing.T) postgres.Database {
 	connString := "postgres://postgres:mysecretpassword@localhost:5432"
 
 	// create database
@@ -29,13 +29,13 @@ func setupTestDB(t *testing.T) postgres.Session {
 	dbpool.Close()
 
 	os.Setenv("DATABASE_URL", connString+"/"+dbName)
-	sesssion, err := postgres.Connect(context.Background())
+	db, err := postgres.Connect(context.Background())
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
 		fmt.Println("closing connection")
-		sesssion.Close()
+		db.Close()
 	})
 
-	return sesssion
+	return db
 }

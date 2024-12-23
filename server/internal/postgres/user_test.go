@@ -2,28 +2,26 @@ package postgres_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
 func TestCreateUser(t *testing.T) {
-	session := setupTestDB(t)
+	db := setupTestDB(t)
 
 	t.Run("get non-existing user", func(t *testing.T) {
-		_, err := session.GetUser(context.Background(), "testuser")
+		_, err := db.Do(context.Background()).GetUser(context.Background(), "testuser")
 		require.Error(t, err)
 	})
 
 	t.Run("create user", func(t *testing.T) {
-		err := session.CreateUser(context.Background(), "testuser", "testpassword")
-		fmt.Println("user created")
+		err := db.Do(context.Background()).CreateUser(context.Background(), "testuser", "testpassword")
 		require.NoError(t, err)
 	})
 
 	t.Run("get existing user", func(t *testing.T) {
-		user, err := session.GetUser(context.Background(), "testuser")
+		user, err := db.Do(context.Background()).GetUser(context.Background(), "testuser")
 		require.NoError(t, err)
 		require.Equal(t, "testuser", user.Username)
 		require.Equal(t, "testpassword", user.Password)
@@ -32,12 +30,12 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("delete user", func(t *testing.T) {
-		err := session.DeleteUser(context.Background(), "testuser")
+		err := db.Do(context.Background()).DeleteUser(context.Background(), "testuser")
 		require.NoError(t, err)
 	})
 
 	t.Run("get non-existing user", func(t *testing.T) {
-		_, err := session.GetUser(context.Background(), "testuser")
+		_, err := db.Do(context.Background()).GetUser(context.Background(), "testuser")
 		require.Error(t, err)
 	})
 }

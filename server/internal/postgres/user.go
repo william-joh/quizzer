@@ -8,7 +8,7 @@ import (
 	"github.com/william-joh/quizzer/server/internal/quizzer"
 )
 
-func (db *db) CreateUser(ctx context.Context, username, password string) error {
+func (s *session) CreateUser(ctx context.Context, username, password string) error {
 	log.Debug().Str("username", username).Msg("creating user")
 	sql, args, err := psql().Insert("users").
 		Columns("id", "username", "password").
@@ -17,11 +17,11 @@ func (db *db) CreateUser(ctx context.Context, username, password string) error {
 		return err
 	}
 
-	_, err = db.pool.Exec(ctx, sql, args...)
+	_, err = s.conn.Exec(ctx, sql, args...)
 	return err
 }
 
-func (db *db) GetUser(ctx context.Context, username string) (quizzer.User, error) {
+func (s *session) GetUser(ctx context.Context, username string) (quizzer.User, error) {
 	log.Debug().Str("username", username).Msg("getting user")
 
 	sql, args, err := psql().Select("id", "username", "password", "signup_date").
@@ -31,13 +31,13 @@ func (db *db) GetUser(ctx context.Context, username string) (quizzer.User, error
 		return quizzer.User{}, err
 	}
 
-	row := db.pool.QueryRow(ctx, sql, args...)
+	row := s.conn.QueryRow(ctx, sql, args...)
 	var user quizzer.User
 	err = row.Scan(&user.ID, &user.Username, &user.Password, &user.SignupDate)
 	return user, err
 }
 
-func (db *db) DeleteUser(ctx context.Context, username string) error {
+func (s *session) DeleteUser(ctx context.Context, username string) error {
 	log.Debug().Str("username", username).Msg("deleting user")
 
 	sql, args, err := psql().Delete("users").
@@ -46,6 +46,6 @@ func (db *db) DeleteUser(ctx context.Context, username string) error {
 		return err
 	}
 
-	_, err = db.pool.Exec(ctx, sql, args...)
+	_, err = s.conn.Exec(ctx, sql, args...)
 	return err
 }

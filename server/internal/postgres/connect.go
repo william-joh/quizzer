@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Connect(ctx context.Context) (Session, error) {
+func Connect(ctx context.Context) (Database, error) {
 	// postgres://username:password@localhost:5432
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
