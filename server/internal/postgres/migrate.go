@@ -22,9 +22,7 @@ CREATE TABLE users (
 	id TEXT PRIMARY KEY,
 	username TEXT UNIQUE NOT NULL,
 	password TEXT NOT NULL,
-	signup_date TIMESTAMP NOT NULL DEFAULT NOW(),
-	calories_daily_goal INT DEFAULT 0,
-	CONSTRAINT fk_language FOREIGN KEY(language) REFERENCES languages(language_name) ON DELETE CASCADE
+	signup_date TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE sessions (
