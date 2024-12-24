@@ -8,11 +8,11 @@ import (
 	"github.com/william-joh/quizzer/server/internal/quizzer"
 )
 
-func (s *session) CreateUser(ctx context.Context, username, password string) error {
-	log.Debug().Str("username", username).Msg("creating user")
+func (s *session) CreateUser(ctx context.Context, id, username, password string) error {
+	log.Debug().Str("id", id).Str("username", username).Msg("creating user")
 	sql, args, err := psql().Insert("users").
 		Columns("id", "username", "password").
-		Values(sq.Expr("gen_random_uuid()"), username, password).ToSql()
+		Values(id, username, password).ToSql()
 	if err != nil {
 		return err
 	}

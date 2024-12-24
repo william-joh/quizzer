@@ -53,9 +53,20 @@ func (db *db) Close() error {
 }
 
 type Session interface {
-	CreateUser(ctx context.Context, username, password string) error
+	CreateUser(ctx context.Context, id, username, password string) error
 	GetUser(ctx context.Context, username string) (quizzer.User, error)
 	DeleteUser(ctx context.Context, username string) error
+
+	CreateQuiz(ctx context.Context, id, title, createdBy string) error
+	GetQuiz(ctx context.Context, id string) (quizzer.Quiz, error)
+	DeleteQuiz(ctx context.Context, id string) error
+	ListQuizzes(ctx context.Context) ([]quizzer.Quiz, error)
+
+	CreateQuestion(ctx context.Context, question quizzer.Question) error
+	GetQuestion(ctx context.Context, id string) (quizzer.Question, error)
+	ListQuestions(ctx context.Context, quizID string) ([]quizzer.Question, error)
+	UpdateQuestion(ctx context.Context, question quizzer.Question) error
+	DeleteQuestion(ctx context.Context, id string) error
 }
 
 var _ Session = &session{}

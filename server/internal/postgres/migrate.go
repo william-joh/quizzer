@@ -31,6 +31,29 @@ CREATE TABLE sessions (
 	expiry_time INT NOT NULL,
 	CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE quizzes (
+	id TEXT PRIMARY KEY,
+	title TEXT NOT NULL,
+	created_by TEXT NOT NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+	CONSTRAINT fk_user FOREIGN KEY(created_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE questions (
+	id TEXT PRIMARY KEY,
+	quiz_id TEXT NOT NULL,
+	question TEXT NOT NULL,
+	index INT NOT NULL,
+	time_limit BIGINT NOT NULL,
+	answers TEXT[] NOT NULL CHECK (array_length(answers, 1) > 0),
+	correct_answer TEXT NOT NULL CHECK (correct_answer = ANY (answers)),
+	video_url TEXT,
+	video_start_time INT,
+	video_end_time INT,
+	CONSTRAINT fk_quiz FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
+	CONSTRAINT unique_quiz_index UNIQUE (quiz_id, index)
+);
 	`,
 		`-- noop`)
 
