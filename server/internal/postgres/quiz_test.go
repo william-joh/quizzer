@@ -9,11 +9,11 @@ import (
 )
 
 func TestQuiz(t *testing.T) {
-	db := setupTestDB(t)
+	db := SetupTestDB(t)
 
 	err := db.Do(context.Background()).CreateUser(context.Background(), "testuser-id", "testuser", "testpassword")
 	require.NoError(t, err)
-	user, err := db.Do(context.Background()).GetUser(context.Background(), "testuser")
+	user, err := db.Do(context.Background()).GetUser(context.Background(), "testuser-id")
 	require.NoError(t, err)
 
 	t.Run("get non-existing quiz", func(t *testing.T) {

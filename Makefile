@@ -6,4 +6,4 @@ local-run-server:
 	go run ./cmd/main
 
 postgres-up:
-	docker run --name pg -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres
+	docker run --rm --name pg -p 5432:5432 -e POSTGRES_PASSWORD=mysecretpassword -d postgres

@@ -11,7 +11,7 @@ import (
 	"github.com/william-joh/quizzer/server/internal/postgres"
 )
 
-func setupTestDB(t *testing.T) postgres.Database {
+func SetupTestDB(t *testing.T) postgres.Database {
 	connString := "postgres://postgres:mysecretpassword@localhost:5432"
 
 	// create database

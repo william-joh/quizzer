@@ -25,7 +25,7 @@ CREATE TABLE users (
 	signup_date TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE sessions (
+CREATE TABLE auth_sessions (
 	id TEXT PRIMARY KEY,
 	user_id TEXT,
 	expiry_time INT NOT NULL,

@@ -8,10 +8,10 @@ import (
 )
 
 func TestCreateUser(t *testing.T) {
-	db := setupTestDB(t)
+	db := SetupTestDB(t)
 
 	t.Run("get non-existing user", func(t *testing.T) {
-		_, err := db.Do(context.Background()).GetUser(context.Background(), "testuser")
+		_, err := db.Do(context.Background()).GetUser(context.Background(), "testuser-id")
 		require.Error(t, err)
 	})
 
@@ -21,7 +21,7 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("get existing user", func(t *testing.T) {
-		user, err := db.Do(context.Background()).GetUser(context.Background(), "testuser")
+		user, err := db.Do(context.Background()).GetUser(context.Background(), "testuser-id")
 		require.NoError(t, err)
 		require.Equal(t, "testuser-id", user.ID)
 		require.Equal(t, "testuser", user.Username)
@@ -30,12 +30,12 @@ func TestCreateUser(t *testing.T) {
 	})
 
 	t.Run("delete user", func(t *testing.T) {
-		err := db.Do(context.Background()).DeleteUser(context.Background(), "testuser")
+		err := db.Do(context.Background()).DeleteUser(context.Background(), "testuser-id")
 		require.NoError(t, err)
 	})
 
 	t.Run("get non-existing user", func(t *testing.T) {
-		_, err := db.Do(context.Background()).GetUser(context.Background(), "testuser")
+		_, err := db.Do(context.Background()).GetUser(context.Background(), "testuser-id")
 		require.Error(t, err)
 	})
 }

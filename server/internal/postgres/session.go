@@ -53,8 +53,12 @@ func (db *db) Close() error {
 }
 
 type Session interface {
+	CreateAuthSession(ctx context.Context, userID, sessionID string) error
+	GetAuthSession(ctx context.Context, sessionID string) (string, error)
+
 	CreateUser(ctx context.Context, id, username, password string) error
-	GetUser(ctx context.Context, username string) (quizzer.User, error)
+	GetUser(ctx context.Context, id string) (quizzer.User, error)
+	GetUserByUsername(ctx context.Context, username string) (quizzer.User, error)
 	DeleteUser(ctx context.Context, username string) error
 
 	CreateQuiz(ctx context.Context, id, title, createdBy string) error
