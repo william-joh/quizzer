@@ -45,12 +45,12 @@ CREATE TABLE questions (
 	quiz_id TEXT NOT NULL,
 	question TEXT NOT NULL,
 	index INT NOT NULL,
-	time_limit BIGINT NOT NULL,
+	time_limit_seconds INT NOT NULL,
 	answers TEXT[] NOT NULL CHECK (array_length(answers, 1) > 0),
 	correct_answer TEXT NOT NULL CHECK (correct_answer = ANY (answers)),
 	video_url TEXT,
-	video_start_time INT,
-	video_end_time INT,
+	video_start_time_seconds INT,
+	video_end_time_seconds INT,
 	CONSTRAINT fk_quiz FOREIGN KEY(quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
 	CONSTRAINT unique_quiz_index UNIQUE (quiz_id, index)
 );

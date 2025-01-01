@@ -3,7 +3,6 @@ package postgres_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/william-joh/quizzer/server/internal/quizzer"
@@ -25,38 +24,38 @@ func TestQuestions(t *testing.T) {
 
 	t.Run("create question", func(t *testing.T) {
 		err := db.Do(context.Background()).CreateQuestion(context.Background(), quizzer.Question{
-			ID:             "testquestion-id1",
-			QuizID:         "testquiz-id",
-			Question:       "testquestion1",
-			Index:          1,
-			TimeLimit:      10 * time.Second,
-			Answers:        []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer:  "answer1",
-			VideoURL:       asPtr("testurl"),
-			VideoStartTime: asPtr(time.Millisecond * 100),
-			VideoEndTime:   asPtr(time.Millisecond * 200),
+			ID:                    "testquestion-id1",
+			QuizID:                "testquiz-id",
+			Question:              "testquestion1",
+			Index:                 1,
+			TimeLimitSeconds:      10,
+			Answers:               []string{"answer1", "answer2", "answer3"},
+			CorrectAnswer:         "answer1",
+			VideoURL:              asPtr("testurl"),
+			VideoStartTimeSeconds: asPtr(uint64(10)),
+			VideoEndTimeSeconds:   asPtr(uint64(20)),
 		})
 		require.NoError(t, err)
 
 		err = db.Do(context.Background()).CreateQuestion(context.Background(), quizzer.Question{
-			ID:            "testquestion-id2",
-			QuizID:        "testquiz-id",
-			Question:      "testquestion2",
-			Index:         2,
-			TimeLimit:     20 * time.Second,
-			Answers:       []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer: "answer2",
+			ID:               "testquestion-id2",
+			QuizID:           "testquiz-id",
+			Question:         "testquestion2",
+			Index:            2,
+			TimeLimitSeconds: 20,
+			Answers:          []string{"answer1", "answer2", "answer3"},
+			CorrectAnswer:    "answer2",
 		})
 		require.NoError(t, err)
 
 		err = db.Do(context.Background()).CreateQuestion(context.Background(), quizzer.Question{
-			ID:            "testquestion-id3",
-			QuizID:        "testquiz-id",
-			Question:      "testquestion3",
-			Index:         3,
-			TimeLimit:     30 * time.Second,
-			Answers:       []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer: "answer3",
+			ID:               "testquestion-id3",
+			QuizID:           "testquiz-id",
+			Question:         "testquestion3",
+			Index:            3,
+			TimeLimitSeconds: 30,
+			Answers:          []string{"answer1", "answer2", "answer3"},
+			CorrectAnswer:    "answer3",
 		})
 		require.NoError(t, err)
 	})
@@ -67,28 +66,28 @@ func TestQuestions(t *testing.T) {
 		require.Len(t, questions, 3)
 
 		expectedQuestion1 := quizzer.Question{
-			ID:             "testquestion-id1",
-			QuizID:         "testquiz-id",
-			Question:       "testquestion1",
-			Index:          1,
-			TimeLimit:      10 * time.Second,
-			Answers:        []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer:  "answer1",
-			VideoURL:       asPtr("testurl"),
-			VideoStartTime: asPtr(time.Millisecond * 100),
-			VideoEndTime:   asPtr(time.Millisecond * 200),
+			ID:                    "testquestion-id1",
+			QuizID:                "testquiz-id",
+			Question:              "testquestion1",
+			Index:                 1,
+			TimeLimitSeconds:      10,
+			Answers:               []string{"answer1", "answer2", "answer3"},
+			CorrectAnswer:         "answer1",
+			VideoURL:              asPtr("testurl"),
+			VideoStartTimeSeconds: asPtr(uint64(10)),
+			VideoEndTimeSeconds:   asPtr(uint64(20)),
 		}
 		require.Equal(t, expectedQuestion1, questions[0])
 
 		expectedQuestion2 := quizzer.Question{
-			ID:            "testquestion-id2",
-			QuizID:        "testquiz-id",
-			Question:      "testquestion2",
-			Index:         2,
-			TimeLimit:     20 * time.Second,
-			Answers:       []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer: "answer2",
-			VideoURL:      nil,
+			ID:               "testquestion-id2",
+			QuizID:           "testquiz-id",
+			Question:         "testquestion2",
+			Index:            2,
+			TimeLimitSeconds: 20,
+			Answers:          []string{"answer1", "answer2", "answer3"},
+			CorrectAnswer:    "answer2",
+			VideoURL:         nil,
 		}
 		require.Equal(t, expectedQuestion2, questions[1])
 	})
@@ -97,48 +96,48 @@ func TestQuestions(t *testing.T) {
 		question, err := db.Do(context.Background()).GetQuestion(context.Background(), "testquestion-id1")
 		require.NoError(t, err)
 		expectedQuestion := quizzer.Question{
-			ID:             "testquestion-id1",
-			QuizID:         "testquiz-id",
-			Question:       "testquestion1",
-			Index:          1,
-			TimeLimit:      10 * time.Second,
-			Answers:        []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer:  "answer1",
-			VideoURL:       asPtr("testurl"),
-			VideoStartTime: asPtr(time.Millisecond * 100),
-			VideoEndTime:   asPtr(time.Millisecond * 200),
+			ID:                    "testquestion-id1",
+			QuizID:                "testquiz-id",
+			Question:              "testquestion1",
+			Index:                 1,
+			TimeLimitSeconds:      10,
+			Answers:               []string{"answer1", "answer2", "answer3"},
+			CorrectAnswer:         "answer1",
+			VideoURL:              asPtr("testurl"),
+			VideoStartTimeSeconds: asPtr(uint64(10)),
+			VideoEndTimeSeconds:   asPtr(uint64(20)),
 		}
 		require.Equal(t, expectedQuestion, question)
 	})
 
 	t.Run("edit question", func(t *testing.T) {
 		err := db.Do(context.Background()).UpdateQuestion(context.Background(), quizzer.Question{
-			ID:             "testquestion-id1",
-			QuizID:         "testquiz-id",
-			Question:       "editedquestion1",
-			Index:          1,
-			TimeLimit:      10 * time.Second,
-			Answers:        []string{"answer1", "answer2", "answer3", "answer4"},
-			CorrectAnswer:  "answer3",
-			VideoURL:       asPtr("editedurl"),
-			VideoStartTime: asPtr(time.Millisecond * 200),
-			VideoEndTime:   asPtr(time.Millisecond * 300),
+			ID:                    "testquestion-id1",
+			QuizID:                "testquiz-id",
+			Question:              "editedquestion1",
+			Index:                 1,
+			TimeLimitSeconds:      10,
+			Answers:               []string{"answer1", "answer2", "answer3", "answer4"},
+			CorrectAnswer:         "answer3",
+			VideoURL:              asPtr("editedurl"),
+			VideoStartTimeSeconds: asPtr(uint64(20)),
+			VideoEndTimeSeconds:   asPtr(uint64(300)),
 		})
 		require.NoError(t, err)
 
 		question, err := db.Do(context.Background()).GetQuestion(context.Background(), "testquestion-id1")
 		require.NoError(t, err)
 		expectedQuestion := quizzer.Question{
-			ID:             "testquestion-id1",
-			QuizID:         "testquiz-id",
-			Question:       "editedquestion1",
-			Index:          1,
-			TimeLimit:      10 * time.Second,
-			Answers:        []string{"answer1", "answer2", "answer3", "answer4"},
-			CorrectAnswer:  "answer3",
-			VideoURL:       asPtr("editedurl"),
-			VideoStartTime: asPtr(time.Millisecond * 200),
-			VideoEndTime:   asPtr(time.Millisecond * 300),
+			ID:                    "testquestion-id1",
+			QuizID:                "testquiz-id",
+			Question:              "editedquestion1",
+			Index:                 1,
+			TimeLimitSeconds:      10,
+			Answers:               []string{"answer1", "answer2", "answer3", "answer4"},
+			CorrectAnswer:         "answer3",
+			VideoURL:              asPtr("editedurl"),
+			VideoStartTimeSeconds: asPtr(uint64(20)),
+			VideoEndTimeSeconds:   asPtr(uint64(300)),
 		}
 		require.Equal(t, expectedQuestion, question)
 	})

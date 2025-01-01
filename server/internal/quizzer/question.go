@@ -1,16 +1,14 @@
 package quizzer
 
-import "time"
-
 type Question struct {
-	ID             string
-	QuizID         string
-	Question       string
-	Index          int
-	TimeLimit      time.Duration
-	Answers        []string
-	CorrectAnswer  string
-	VideoURL       *string
-	VideoStartTime *time.Duration
-	VideoEndTime   *time.Duration
+	ID                    string   `json:"id"`
+	QuizID                string   `json:"quiz_id"`
+	Question              string   `json:"question"`
+	Index                 int      `json:"index"`
+	TimeLimitSeconds      uint64   `json:"time_limit_seconds"`
+	Answers               []string `json:"answers"`
+	CorrectAnswer         string   `json:"correct_answer"`
+	VideoURL              *string  `json:"video_url,omitempty"`
+	VideoStartTimeSeconds *uint64  `json:"video_start_time_seconds,omitempty"`
+	VideoEndTimeSeconds   *uint64  `json:"video_end_time_seconds,omitempty"`
 }

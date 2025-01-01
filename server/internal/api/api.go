@@ -24,6 +24,7 @@ func NewAPI(db postgres.Database) API {
 func (s *server) Handler() http.Handler {
 	r := mux.NewRouter()
 	r.Use(loggerMiddleware)
+
 	r.Handle("/auth", s.authHandler()).Methods(http.MethodPost)
 	r.Handle("/users", s.createUserHandler()).Methods(http.MethodPost)
 	r.HandleFunc("/healthz", healthzHandler)
@@ -38,6 +39,10 @@ func (s *server) Handler() http.Handler {
 	authorized.Handle("/quizzes", s.listQuizzesHandler()).Methods(http.MethodGet)
 	authorized.Handle("/quizzes/{id}", s.getQuizHandler()).Methods(http.MethodGet)
 	authorized.Handle("/quizzes/{id}", s.deleteQuizHandler()).Methods(http.MethodDelete)
+
+	authorized.Handle("/quizzes/{id}/questions", s.createQuestionHandler()).Methods(http.MethodPost)
+	authorized.Handle("/quizzes/{id}/questions", s.listQuestionsHandler()).Methods(http.MethodGet)
+	authorized.Handle("/quizzes/{id}/questions/{questionID}", s.deleteQuestionHandler()).Methods(http.MethodDelete)
 
 	return r
 }
