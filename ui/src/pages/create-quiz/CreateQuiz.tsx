@@ -70,15 +70,14 @@ export function CreateQuiz() {
   });
 
   const createQuizMutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      const response = await request({
-        url: "/quizzes",
-        method: "POST",
-        data,
-      });
-      return response.data;
-    },
-    onSuccess: () => {
+    mutationFn: async (data: FormData) => doCreateQuiz(data),
+    onSuccess: (data) => {
+      const quizId = data?.id;
+      if (!quizId) {
+        console.error("Quiz ID not found in response");
+        return;
+      }
+
       navigate("/");
     },
   });
@@ -141,6 +140,7 @@ export function CreateQuiz() {
                 </Button>
               </div>
 
+              <FormMessage />
               <Button
                 type="submit"
                 className="w-full"
@@ -255,6 +255,7 @@ function QuestionForm({ control, qIndex, move, remove }: QuestionFormProps) {
             qIndex={qIndex}
             aIndex={aIndex}
             removeAnswer={removeAnswer}
+            totalAnswers={answerFields.length} // Add this prop
           />
         ))}
         <Button
@@ -276,6 +277,7 @@ interface AnswerFormProps {
   qIndex: number;
   aIndex: number;
   removeAnswer: (index: number) => void;
+  totalAnswers: number;
 }
 
 function AnswerForm({
@@ -283,6 +285,7 @@ function AnswerForm({
   qIndex,
   aIndex,
   removeAnswer,
+  totalAnswers,
 }: AnswerFormProps) {
   return (
     <div className="flex items-center gap-2">
@@ -319,9 +322,34 @@ function AnswerForm({
         variant="ghost"
         size="icon"
         onClick={() => removeAnswer(aIndex)}
+        disabled={totalAnswers <= 2}
       >
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
   );
+}
+
+async function doCreateQuiz(data: FormData) {
+  let reqData = {
+    title: data.title,
+    questions: data.questions.map((q, i) => {
+      return {
+        question: q.question,
+        index: i,
+        answers: q.answers.map((a) => a.text),
+        correctAnswers: q.answers.filter((a) => a.isCorrect).map((a) => a.text),
+        timeLimitSeconds: q.timeLimitSeconds,
+      };
+    }),
+  };
+
+  console.log("reqData", reqData);
+
+  const response = await request({
+    url: "/quizzes",
+    method: "POST",
+    data: reqData,
+  });
+  return response.data;
 }

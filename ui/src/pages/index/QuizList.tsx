@@ -1,45 +1,42 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useEffect, useState } from "react";
+import { request } from "@/lib/axios";
+import { useQuery } from "@tanstack/react-query";
+import moment from "moment";
 
 interface Quiz {
   id: string;
   title: string;
-  createdBy: string;
+  createdByName: string;
   createdAt: string;
-  questionCount: number;
+  nrQuestions: number;
 }
 
-const mockedQuizzes: Quiz[] = [
-  {
-    id: "1",
-    title: "General Knowledge",
-    createdBy: "User1",
-    createdAt: "2023-01-01",
-    questionCount: 10,
-  },
-  {
-    id: "2",
-    title: "Science Quiz",
-    createdBy: "User2",
-    createdAt: "2023-02-01",
-    questionCount: 15,
-  },
-  {
-    id: "3",
-    title: "History Quiz",
-    createdBy: "User3",
-    createdAt: "2023-03-01",
-    questionCount: 20,
-  },
-];
-
 export function QuizList() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const { isPending, error, data } = useQuery({
+    queryKey: ["quizzes"],
+    queryFn: async () => {
+      const response = await request({
+        url: "/quizzes",
+        method: "GET",
+      });
+      console.log("list quizzes response", response);
 
-  useEffect(() => {
-    // Simulate fetching data
-    setQuizzes(mockedQuizzes);
-  }, []);
+      return response.data;
+    },
+  });
+
+  if (error) {
+    return <div>Error: {error.message}</div>;
+  }
+  if (isPending) {
+    return <div>Loading...</div>;
+  }
+
+  const quizzes = data as Quiz[];
+
+  if (!quizzes || quizzes.length === 0) {
+    return <div>No quizzes found</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -53,19 +50,20 @@ export function QuizList() {
               <div>
                 <span className="text-sm text-gray-700">Created by: </span>
                 <span className="text-sm font-semibold text-gray-900">
-                  {quiz.createdBy}
-                </span>
-              </div>
-              <div>
-                <span className="text-sm text-gray-700">Created at: </span>
-                <span className="text-sm font-semibold text-gray-900">
-                  {quiz.createdAt}
+                  {quiz.createdByName}
                 </span>
               </div>
               <div>
                 <span className="text-sm text-gray-700">Questions: </span>
                 <span className="text-sm font-semibold text-gray-900">
-                  {quiz.questionCount}
+                  {quiz.nrQuestions}
+                </span>
+              </div>
+              <div>
+                <span className="text-sm text-gray-700">Created at: </span>
+                <span className="text-sm font-semibold text-gray-900">
+                  {moment(quiz.createdAt).format("YYYY-MM-DD")}{" "}
+                  {/* Format the date */}
                 </span>
               </div>
             </CardContent>

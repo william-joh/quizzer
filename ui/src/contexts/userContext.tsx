@@ -1,5 +1,5 @@
 import { request } from "@/lib/axios";
-import { createContext, useState, useContext } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 
 interface User {
   id: string;
@@ -38,6 +38,10 @@ export const CurrentUserProvider = ({ children }: { children: any }) => {
       return;
     }
   };
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
 
   return (
     <CurrentUserContext.Provider

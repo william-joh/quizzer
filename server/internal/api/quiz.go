@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -18,8 +19,7 @@ func (s *server) createQuizHandler() http.Handler {
 			Questions []quizzer.Question `json:"questions"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&quiz); err != nil {
-			log.Error().Err(err).Msg("failed to decode request body")
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			toJSONError(w, fmt.Errorf("failed to decode request body: %w", err), http.StatusBadRequest)
 			return
 		}
 
@@ -42,8 +42,7 @@ func (s *server) createQuizHandler() http.Handler {
 			return nil
 		})
 		if err != nil {
-			log.Error().Err(err).Msg("failed to create quiz")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			toJSONError(w, fmt.Errorf("failed to create quiz: %w", err), http.StatusInternalServerError)
 			return
 		}
 
@@ -56,8 +55,7 @@ func (s *server) createQuizHandler() http.Handler {
 		w.Header().Set("Content-Type", "application/json")
 		err = json.NewEncoder(w).Encode(resp)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to encode response")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			toJSONError(w, fmt.Errorf("failed to encode response: %w", err), http.StatusInternalServerError)
 			return
 		}
 	})
@@ -104,16 +102,51 @@ func (s *server) getQuizHandler() http.Handler {
 
 func (s *server) listQuizzesHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		quizzes, err := s.db.Do(r.Context()).ListQuizzes(r.Context())
+		respBody := []struct {
+			quizzer.Quiz
+			CreatedByName string `json:"createdByName"`
+			NrQuestions   int    `json:"nrQuestions"`
+		}{}
+
+		err := s.db.InTx(r.Context(), func(s postgres.Session) error {
+			quizzes, err := s.ListQuizzes(r.Context())
+			if err != nil {
+				return err
+			}
+
+			for i := range quizzes {
+				item := struct {
+					quizzer.Quiz
+					CreatedByName string `json:"createdByName"`
+					NrQuestions   int    `json:"nrQuestions"`
+				}{
+					Quiz: quizzes[i],
+				}
+
+				questions, err := s.ListQuestions(r.Context(), quizzes[i].ID)
+				if err != nil {
+					return err
+				}
+				item.NrQuestions = len(questions)
+
+				user, err := s.GetUser(r.Context(), quizzes[i].CreatedBy)
+				if err != nil {
+					return err
+				}
+				item.CreatedByName = user.Username
+
+				respBody = append(respBody, item)
+			}
+
+			return nil
+		})
 		if err != nil {
-			log.Error().Err(err).Msg("failed to list quizzes")
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
+			toJSONError(w, err, http.StatusInternalServerError)
 		}
 
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/json")
-		err = json.NewEncoder(w).Encode(quizzes)
+		err = json.NewEncoder(w).Encode(respBody)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to encode response")
 			http.Error(w, err.Error(), http.StatusInternalServerError)

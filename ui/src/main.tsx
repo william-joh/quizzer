@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CurrentUserProvider } from "./contexts/userContext.tsx";
 import { Navbar } from "./pages/navbar/Navbar.tsx";
 import { CreateQuiz } from "./pages/create-quiz/CreateQuiz.tsx";
+import { AuthLayout } from "./layouts/AuthLayout.tsx";
 
 const queryClient = new QueryClient();
 
@@ -23,7 +24,9 @@ createRoot(document.getElementById("root")!).render(
                 <Route index element={<Index />} />
 
                 <Route path="login" element={<Login />} />
-                <Route path="/quizzes/create" element={<CreateQuiz />} />
+                <Route element={<AuthLayout />}>
+                  <Route path="/quizzes/create" element={<CreateQuiz />} />
+                </Route>
               </Route>
             </Route>
           </Routes>
