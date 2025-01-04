@@ -85,7 +85,7 @@ func TestAuth(t *testing.T) {
 	defer server.Close()
 
 	t.Run("unauthenticated client cannot access user routes", func(t *testing.T) {
-		req, err := http.NewRequest(http.MethodGet, server.URL+"/users/test-userid", nil)
+		req, err := http.NewRequest(http.MethodGet, server.URL+"/current-user", nil)
 		require.NoError(t, err)
 
 		resp, err := client.Do(req)
@@ -107,7 +107,7 @@ func TestAuth(t *testing.T) {
 		require.Equal(t, "quizzer_session_id", resp.Cookies()[0].Name)
 
 		// subsequent requests should be authenticated by the cookie
-		req, err = http.NewRequest(http.MethodGet, server.URL+"/users/test-userid", nil)
+		req, err = http.NewRequest(http.MethodGet, server.URL+"/current-user", nil)
 		require.NoError(t, err)
 
 		resp, err = client.Do(req)

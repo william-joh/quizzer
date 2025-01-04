@@ -21,12 +21,12 @@ func TestQuestion_CreateQuestion(t *testing.T) {
 		{
 			name: "valid minimal question",
 			givenQuestion: `{
-				"quiz_id": "quizID",
+				"quizId": "quizID",
 				"question": "testquestion",
 				"answers": ["a", "b"],
-				"correct_answers": ["a"],
+				"correctAnswers": ["a"],
 				"index": 0,
-				"time_limit_seconds": 30
+				"timeLimitSeconds": 30
 			}`,
 			expectedQuestion: quizzer.Question{
 				QuizID:           "quizID",
@@ -40,15 +40,15 @@ func TestQuestion_CreateQuestion(t *testing.T) {
 		{
 			name: "valid question with video",
 			givenQuestion: `{
-				"quiz_id": "quizID",
+				"quizId": "quizID",
 				"question": "testquestion",
 				"answers": ["a", "b", "c"],
-				"correct_answers": ["c"],
+				"correctAnswers": ["c"],
 				"index": 1,
-				"time_limit_seconds": 60,
-				"video_url": "https://example.com",
-				"video_start_time_seconds": 10,
-				"video_end_time_seconds": 20
+				"timeLimitSeconds": 60,
+				"videoUrl": "https://example.com",
+				"videoStartTimeSeconds": 10,
+				"videoEndTimeSeconds": 20
 			}`,
 			expectedQuestion: quizzer.Question{
 				QuizID:                "quizID",

@@ -27,6 +27,8 @@ func TestUser(t *testing.T) {
 	var userID string
 	t.Run("create user", func(t *testing.T) {
 		sessionMock.On("CreateUser", anyCtx, anyString, "testuser", anyString).Return(nil)
+		sessionMock.On("CreateAuthSession", anyCtx, anyString, anyString).
+			Return(nil)
 
 		req, err := http.NewRequest("POST", server.URL+"/users", strings.NewReader(user))
 		require.NoError(t, err)
@@ -51,9 +53,9 @@ func TestUser(t *testing.T) {
 			Username:   "testuser",
 			SignupDate: time.Now(),
 		}
-		sessionMock.On("GetUser", anyCtx, userID).Return(exampleUser, nil)
+		sessionMock.On("GetUser", anyCtx, "test-userid").Return(exampleUser, nil)
 
-		req, err := http.NewRequest("GET", server.URL+"/users/"+userID, nil)
+		req, err := http.NewRequest("GET", server.URL+"/current-user", nil)
 		require.NoError(t, err)
 
 		resp, err := client.Do(req)
