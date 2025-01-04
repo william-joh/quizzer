@@ -1,16 +1,18 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"github.com/william-joh/quizzer/server/internal/postgres"
 )
 
 type API interface {
 	Handler() http.Handler
+	Run() error
 }
 
 type server struct {
@@ -32,7 +34,7 @@ func (s *server) Handler() http.Handler {
 	authorized := r.NewRoute().Subrouter()
 	authorized.Use(s.authMiddleware)
 
-	authorized.Handle("/users/{id}", s.getUserHandler()).Methods(http.MethodGet)
+	authorized.Handle("/current-user", s.getUserHandler()).Methods(http.MethodGet)
 	authorized.Handle("/users/{id}", s.deleteUserHandler()).Methods(http.MethodDelete)
 
 	authorized.Handle("/quizzes", s.createQuizHandler()).Methods(http.MethodPost)
@@ -47,27 +49,34 @@ func (s *server) Handler() http.Handler {
 	return r
 }
 
-// func (s *server) Run() error {
-// 	srv := &http.Server{
-// 		Handler: r,
-// 		Addr:    "127.0.0.1:8000",
-// 		// Good practice: enforce timeouts for servers you create!
-// 		WriteTimeout: 15 * time.Second,
-// 		ReadTimeout:  15 * time.Second,
-// 	}
+func (s *server) Run() error {
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173"}, // All origins
+		AllowedMethods:   []string{"GET", "POST", "DELETE", "HEAD"},
+		AllowCredentials: true,
+		Debug:            true,
+	})
 
-// 	return srv.ListenAndServe()
-// }
+	srv := &http.Server{
+		Handler: c.Handler(s.Handler()),
+		Addr:    "127.0.0.1:8000",
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
+
+	log.Info().Str("addr", srv.Addr).Msg("starting server")
+	return srv.ListenAndServe()
+}
 
 func healthzHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Category: %v\n", vars["category"])
+	w.Write([]byte("OK"))
 }
 
 func loggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Debug().Str("method", r.Method).Str("url", r.URL.String()).Msg("request")
+		log.Debug().Str("method", r.Method).Str("url", r.URL.String()).Any("headers", r.Header).Msg("request")
 		next.ServeHTTP(w, r)
 	})
 }

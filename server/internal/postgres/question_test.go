@@ -30,7 +30,7 @@ func TestQuestions(t *testing.T) {
 			Index:                 1,
 			TimeLimitSeconds:      10,
 			Answers:               []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer:         "answer1",
+			CorrectAnswers:        []string{"answer1"},
 			VideoURL:              asPtr("testurl"),
 			VideoStartTimeSeconds: asPtr(uint64(10)),
 			VideoEndTimeSeconds:   asPtr(uint64(20)),
@@ -44,7 +44,7 @@ func TestQuestions(t *testing.T) {
 			Index:            2,
 			TimeLimitSeconds: 20,
 			Answers:          []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer:    "answer2",
+			CorrectAnswers:   []string{"answer2"},
 		})
 		require.NoError(t, err)
 
@@ -55,7 +55,7 @@ func TestQuestions(t *testing.T) {
 			Index:            3,
 			TimeLimitSeconds: 30,
 			Answers:          []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer:    "answer3",
+			CorrectAnswers:   []string{"answer3"},
 		})
 		require.NoError(t, err)
 	})
@@ -72,7 +72,7 @@ func TestQuestions(t *testing.T) {
 			Index:                 1,
 			TimeLimitSeconds:      10,
 			Answers:               []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer:         "answer1",
+			CorrectAnswers:        []string{"answer1"},
 			VideoURL:              asPtr("testurl"),
 			VideoStartTimeSeconds: asPtr(uint64(10)),
 			VideoEndTimeSeconds:   asPtr(uint64(20)),
@@ -86,7 +86,7 @@ func TestQuestions(t *testing.T) {
 			Index:            2,
 			TimeLimitSeconds: 20,
 			Answers:          []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer:    "answer2",
+			CorrectAnswers:   []string{"answer2"},
 			VideoURL:         nil,
 		}
 		require.Equal(t, expectedQuestion2, questions[1])
@@ -102,7 +102,7 @@ func TestQuestions(t *testing.T) {
 			Index:                 1,
 			TimeLimitSeconds:      10,
 			Answers:               []string{"answer1", "answer2", "answer3"},
-			CorrectAnswer:         "answer1",
+			CorrectAnswers:        []string{"answer1"},
 			VideoURL:              asPtr("testurl"),
 			VideoStartTimeSeconds: asPtr(uint64(10)),
 			VideoEndTimeSeconds:   asPtr(uint64(20)),
@@ -118,7 +118,7 @@ func TestQuestions(t *testing.T) {
 			Index:                 1,
 			TimeLimitSeconds:      10,
 			Answers:               []string{"answer1", "answer2", "answer3", "answer4"},
-			CorrectAnswer:         "answer3",
+			CorrectAnswers:        []string{"answer3"},
 			VideoURL:              asPtr("editedurl"),
 			VideoStartTimeSeconds: asPtr(uint64(20)),
 			VideoEndTimeSeconds:   asPtr(uint64(300)),
@@ -134,7 +134,7 @@ func TestQuestions(t *testing.T) {
 			Index:                 1,
 			TimeLimitSeconds:      10,
 			Answers:               []string{"answer1", "answer2", "answer3", "answer4"},
-			CorrectAnswer:         "answer3",
+			CorrectAnswers:        []string{"answer3"},
 			VideoURL:              asPtr("editedurl"),
 			VideoStartTimeSeconds: asPtr(uint64(20)),
 			VideoEndTimeSeconds:   asPtr(uint64(300)),

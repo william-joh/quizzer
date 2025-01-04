@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -21,21 +22,18 @@ func (s *server) authHandler() http.Handler {
 			Password string `json:"password"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
-			log.Error().Err(err).Msg("failed to decode request body")
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			toJSONError(w, fmt.Errorf("decode request body: %w", err), http.StatusBadRequest)
 			return
 		}
 
 		user, err := s.db.Do(r.Context()).GetUserByUsername(r.Context(), creds.Username)
 		if err != nil {
-			log.Error().Err(err).Msg("failed to get user")
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			toJSONError(w, fmt.Errorf("get user: %w", err), http.StatusBadRequest)
 			return
 		}
 
 		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password)); err != nil {
-			log.Error().Err(err).Msg("failed to compare password")
-			http.Error(w, err.Error(), http.StatusUnauthorized)
+			toJSONError(w, fmt.Errorf("check password: %w", err), http.StatusUnauthorized)
 			return
 		}
 
@@ -58,17 +56,33 @@ func (s *server) authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sessionID, err := r.Cookie("quizzer_session_id")
 		if err != nil {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			toJSONError(w, fmt.Errorf("get cookie: %w", err), http.StatusUnauthorized)
 			return
 		}
 
 		userID, err := s.db.Do(r.Context()).GetAuthSession(r.Context(), sessionID.Value)
 		if err != nil {
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			toJSONError(w, fmt.Errorf("get auth session: %w", err), http.StatusUnauthorized)
 			return
 		}
 
 		ctx := context.WithValue(r.Context(), userIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+type errorResponse struct {
+	Error string `json:"error"`
+}
+
+func toJSONError(w http.ResponseWriter, err error, status int) {
+	log.Error().Err(err).Msg("responding with error")
+
+	errorResponse := errorResponse{Error: err.Error()}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
+		log.Error().Err(err).Msg("failed to encode error response")
+	}
 }

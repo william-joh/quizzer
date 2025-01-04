@@ -33,6 +33,18 @@ func (s *server) createUserHandler() http.Handler {
 			return
 		}
 
+		sessionID := uuid.New().String()
+		s.db.Do(r.Context()).CreateAuthSession(r.Context(), userID, sessionID)
+
+		// set cookie
+		http.SetCookie(w, &http.Cookie{
+			Name:  "quizzer_session_id",
+			Value: sessionID,
+			// HttpOnly: true,
+			// SameSite: http.SameSiteStrictMode,
+			// Secure: true,
+		})
+
 		resp := struct {
 			ID string `json:"id"`
 		}{
@@ -51,8 +63,8 @@ func (s *server) createUserHandler() http.Handler {
 
 func (s *server) getUserHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := mux.Vars(r)["id"]
-		user, err := s.db.Do(r.Context()).GetUser(r.Context(), id)
+		userID := r.Context().Value(userIDKey).(string)
+		user, err := s.db.Do(r.Context()).GetUser(r.Context(), userID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

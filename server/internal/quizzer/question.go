@@ -7,7 +7,7 @@ type Question struct {
 	Index                 int      `json:"index"`
 	TimeLimitSeconds      uint64   `json:"time_limit_seconds"`
 	Answers               []string `json:"answers"`
-	CorrectAnswer         string   `json:"correct_answer"`
+	CorrectAnswers        []string `json:"correct_answers"`
 	VideoURL              *string  `json:"video_url,omitempty"`
 	VideoStartTimeSeconds *uint64  `json:"video_start_time_seconds,omitempty"`
 	VideoEndTimeSeconds   *uint64  `json:"video_end_time_seconds,omitempty"`
