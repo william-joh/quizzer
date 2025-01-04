@@ -118,6 +118,7 @@ export function CreateQuiz() {
                     qIndex={qIndex}
                     move={move}
                     remove={remove}
+                    totalQuestions={fields.length}
                   />
                 ))}
 
@@ -165,9 +166,16 @@ interface QuestionFormProps {
   qIndex: number;
   move: (from: number, to: number) => void;
   remove: (index: number) => void;
+  totalQuestions: number;
 }
 
-function QuestionForm({ control, qIndex, move, remove }: QuestionFormProps) {
+function QuestionForm({
+  control,
+  qIndex,
+  move,
+  remove,
+  totalQuestions,
+}: QuestionFormProps) {
   const {
     fields: answerFields,
     append: appendAnswer,
@@ -176,6 +184,9 @@ function QuestionForm({ control, qIndex, move, remove }: QuestionFormProps) {
     name: `questions.${qIndex}.answers`,
     control,
   });
+
+  const answersError =
+    control._formState.errors?.questions?.[qIndex]?.answers?.root?.message;
 
   return (
     <div className="space-y-4 p-4 border rounded-lg relative">
@@ -190,7 +201,7 @@ function QuestionForm({ control, qIndex, move, remove }: QuestionFormProps) {
             <MoveUp className="h-4 w-4" />
           </Button>
         )}
-        {qIndex < answerFields.length - 1 && (
+        {qIndex < totalQuestions - 1 && (
           <Button
             type="button"
             variant="ghost"
@@ -247,7 +258,14 @@ function QuestionForm({ control, qIndex, move, remove }: QuestionFormProps) {
       />
 
       <div className="space-y-2">
-        <Label>Answers (mark correct answers)</Label>
+        <div className="flex justify-between items-center">
+          <Label>Answers (mark correct answers)</Label>
+          {answersError && (
+            <span className="text-sm font-medium text-destructive">
+              {answersError}
+            </span>
+          )}
+        </div>
         {answerFields.map((answer, aIndex) => (
           <AnswerForm
             key={answer.id}
@@ -255,7 +273,7 @@ function QuestionForm({ control, qIndex, move, remove }: QuestionFormProps) {
             qIndex={qIndex}
             aIndex={aIndex}
             removeAnswer={removeAnswer}
-            totalAnswers={answerFields.length} // Add this prop
+            totalAnswers={answerFields.length}
           />
         ))}
         <Button
