@@ -42,10 +42,6 @@ func (s *server) Handler() http.Handler {
 	authorized.Handle("/quizzes/{id}", s.getQuizHandler()).Methods(http.MethodGet)
 	authorized.Handle("/quizzes/{id}", s.deleteQuizHandler()).Methods(http.MethodDelete)
 
-	authorized.Handle("/quizzes/{id}/questions", s.createQuestionHandler()).Methods(http.MethodPost)
-	authorized.Handle("/quizzes/{id}/questions", s.listQuestionsHandler()).Methods(http.MethodGet)
-	authorized.Handle("/quizzes/{id}/questions/{questionID}", s.deleteQuestionHandler()).Methods(http.MethodDelete)
-
 	return r
 }
 

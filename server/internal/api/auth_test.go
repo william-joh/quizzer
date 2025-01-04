@@ -8,9 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/william-joh/quizzer/server/internal/api"
 	"github.com/william-joh/quizzer/server/internal/mocks"
+	"github.com/william-joh/quizzer/server/internal/postgres"
 	"github.com/william-joh/quizzer/server/internal/quizzer"
 )
 
@@ -117,6 +119,8 @@ func TestAuth(t *testing.T) {
 	})
 }
 
+var anyFunc = mock.AnythingOfType("func(postgres.Session) error")
+
 func authenticatedClient(t *testing.T) (http.Client, *mocks.Session, *httptest.Server) {
 	t.Helper()
 	jar, err := cookiejar.New(nil)
@@ -130,6 +134,10 @@ func authenticatedClient(t *testing.T) (http.Client, *mocks.Session, *httptest.S
 	dbMock := mocks.Database{}
 	sessionMock := mocks.Session{}
 	dbMock.On("Do", anyCtx).Return(&sessionMock)
+	dbMock.On("InTx", anyCtx, anyFunc).Run(func(args mock.Arguments) {
+		args.Get(1).(func(s postgres.Session) error)(&sessionMock)
+	}).
+		Return(nil)
 
 	sessionMock.On("GetUserByUsername", anyCtx, "testuser").
 		Return(quizzer.User{ID: "test-userid", Username: "testuser", Password: "$2a$10$9uE.VDznFPnNzJx97ujxM.xoW6sUxcSe.s3bDazeRwHSL8nDzf2SK"}, nil)
