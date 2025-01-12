@@ -1,7 +1,7 @@
 import { request } from "@/lib/axios";
 import { createContext, useState, useContext, useEffect } from "react";
 
-interface User {
+export interface User {
   id: string;
   signupDate: string;
   username: string;
