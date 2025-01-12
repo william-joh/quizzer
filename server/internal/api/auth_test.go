@@ -25,7 +25,7 @@ func TestAuth_InvalidCredentials(t *testing.T) {
 	sessionMock.On("GetUserByUsername", anyCtx, "baduser").
 		Return(quizzer.User{ID: "bad-userid", Username: "baduser", Password: "badpassword"}, nil)
 
-	server := httptest.NewServer(api.NewAPI(&dbMock).Handler())
+	server := httptest.NewServer(api.NewAPI(&dbMock, &mocks.ExecutionService{}).Handler())
 	defer server.Close()
 
 	user := `{"username": "baduser", "password": "testpassword"}`
@@ -46,7 +46,7 @@ func TestAuth_UserNotFound(t *testing.T) {
 	sessionMock.On("GetUserByUsername", anyCtx, "baduser").
 		Return(quizzer.User{}, errors.New("not found"))
 
-	server := httptest.NewServer(api.NewAPI(&dbMock).Handler())
+	server := httptest.NewServer(api.NewAPI(&dbMock, &mocks.ExecutionService{}).Handler())
 	defer server.Close()
 
 	user := `{"username": "baduser", "password": "testpassword"}`
@@ -83,7 +83,7 @@ func TestAuth(t *testing.T) {
 	sessionMock.On("GetUser", anyCtx, "test-userid").
 		Return(quizzer.User{ID: "test-userid", Username: "testuser"}, nil)
 
-	server := httptest.NewServer(api.NewAPI(&dbMock).Handler())
+	server := httptest.NewServer(api.NewAPI(&dbMock, &mocks.ExecutionService{}).Handler())
 	defer server.Close()
 
 	t.Run("unauthenticated client cannot access user routes", func(t *testing.T) {
@@ -148,7 +148,9 @@ func authenticatedClient(t *testing.T) (http.Client, *mocks.Session, *httptest.S
 	sessionMock.On("GetAuthSession", anyCtx, anyString).
 		Return("test-userid", nil).Maybe()
 
-	server := httptest.NewServer(api.NewAPI(&dbMock).Handler())
+	executionMock := mocks.ExecutionService{}
+
+	server := httptest.NewServer(api.NewAPI(&dbMock, &executionMock).Handler())
 
 	req, err := http.NewRequest(http.MethodPost, server.URL+"/auth", strings.NewReader(user))
 	require.NoError(t, err)

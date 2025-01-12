@@ -5,6 +5,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/william-joh/quizzer/server/internal/api"
+	"github.com/william-joh/quizzer/server/internal/execution"
 	"github.com/william-joh/quizzer/server/internal/postgres"
 )
 
@@ -17,6 +18,8 @@ func main() {
 	}
 	defer db.Close()
 
-	api := api.NewAPI(db)
+	executioner := execution.NewInMemory(db)
+
+	api := api.NewAPI(db, executioner)
 	api.Run()
 }

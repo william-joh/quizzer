@@ -183,3 +183,29 @@ func (s *server) deleteQuizHandler() http.Handler {
 		w.WriteHeader(http.StatusOK)
 	})
 }
+
+func (s *server) startQuizHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		quizId := mux.Vars(r)["id"]
+		userId := r.Context().Value(userIDKey).(string)
+
+		code, err := s.exectioner.CreateExecution(r.Context(), quizId, userId)
+		if err != nil {
+			toJSONError(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		resp := struct {
+			Code string `json:"code"`
+		}{
+			Code: code,
+		}
+		w.WriteHeader(http.StatusCreated)
+		w.Header().Set("Content-Type", "application/json")
+		err = json.NewEncoder(w).Encode(resp)
+		if err != nil {
+			toJSONError(w, fmt.Errorf("failed to encode response: %w", err), http.StatusInternalServerError)
+			return
+		}
+	})
+}
