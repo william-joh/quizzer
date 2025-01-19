@@ -1,4 +1,4 @@
-export function Lobby({ participants }: { participants: string[] }) {
+export function ParticipantLobby({ participants }: { participants: string[] }) {
   return (
     <div className="mt-4">
       <h2 className="text-xl font-semibold mb-2">Players in Lobby</h2>

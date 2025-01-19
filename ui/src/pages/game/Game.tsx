@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
-import { GameInfo } from "./GameInfo";
-import { HostLobby } from "./HostLobby";
 import { Participant } from "./GamePage";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { HostGame } from "./host/HostGame";
+import { ParticipantGame } from "./participant/ParticipantGame";
 
 export interface QuizInfo {
   title: string;
   hostName: string;
   isHost: boolean;
+  participants: string[];
 }
 
 export function Game({ participant }: { participant: Participant }) {
@@ -17,8 +18,6 @@ export function Game({ participant }: { participant: Participant }) {
   const { code } = useParams();
 
   const [quizInfo, setQuizInfo] = useState<QuizInfo | null>(null);
-  const [phase, setPhase] = useState("");
-  const [participants, setParticipants] = useState<string[]>([]);
   const [connectionError, setConnectionError] = useState(false);
 
   const ws = useRef<WebSocket>(
@@ -29,8 +28,6 @@ export function Game({ participant }: { participant: Participant }) {
   useEffect(() => {
     console.log("Code", code);
     ws.current.onopen = () => {
-      console.log("Connected to game");
-
       ws.current.send(
         `{ "type": "Join", "data": { "username": "${participant.username}", "id": "${participant.id}"} }`
       );
@@ -39,15 +36,16 @@ export function Game({ participant }: { participant: Participant }) {
       console.log("Got message", event.data);
       const data = JSON.parse(event.data);
       console.log("Data", data);
-      setPhase(data.phase);
 
       if (data.phase == "lobby") {
-        setParticipants(data.participantNames);
         setQuizInfo({
           title: data.quizTitle,
           hostName: data.hostName,
           isHost: data.isHost,
+          participants: data.participantNames,
         });
+      } else {
+        throw new Error("Unknown phase");
       }
     };
     ws.current.onclose = () => {
@@ -62,39 +60,34 @@ export function Game({ participant }: { participant: Participant }) {
 
   if (connectionError) {
     return (
-      <Alert variant="destructive" className="mt-4">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Connection Error</AlertTitle>
-        <AlertDescription>
-          Lost connection to the game. Please try refreshing the page.
-        </AlertDescription>
-      </Alert>
+      <div style={{ marginLeft: "8px", marginRight: "8px" }}>
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Connection Error</AlertTitle>
+          <AlertDescription>
+            Lost connection to the game. Please try refreshing the page.
+          </AlertDescription>
+        </Alert>
+      </div>
     );
   }
 
-  if (!quizInfo || phase == "") {
+  if (!quizInfo) {
     return <div>Loading...</div>;
   }
 
   return (
-    <div>
-      <GameInfo quizInfo={quizInfo} />
+    <div style={{ marginLeft: "8px", marginRight: "8px" }}>
+      {quizInfo.isHost && (
+        <HostGame ws={ws.current} initialQuizInfo={quizInfo} />
+      )}
 
-      <h1>Game</h1>
-
-      <div>Phase: {phase}</div>
-
-      {quizInfo.isHost ? (
-        <>
-          {phase == "lobby" && (
-            <HostLobby
-              participants={participants}
-              onStart={() => ws.current.send(`{ "type": "Start" }`)}
-            />
-          )}
-        </>
-      ) : (
-        <>{phase == "lobby" && <div>Waiting for host to start game...</div>}</>
+      {!quizInfo.isHost && (
+        <ParticipantGame
+          ws={ws.current}
+          initialQuizInfo={quizInfo}
+          participant={participant}
+        />
       )}
     </div>
   );

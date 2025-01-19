@@ -62,6 +62,12 @@ func (e *Execution) HandleMessages(conn *websocket.Conn) error {
 		err = e.handleJoinMsg(conn, msg)
 	case "Start":
 		err = e.handleStartMsg(conn)
+	case "FinishQuestion":
+		err = e.handleFinishQuestionMsg(conn)
+	case "NextQuestion":
+		err = e.handleNextQuestionMsg(conn)
+	case "AnswerQuestion":
+		err = e.handleAnswerQuestionMsg(conn, msg)
 	default:
 		log.Error().Str("type", msg.Type).Msg("Unknown message type")
 		err = fmt.Errorf("unknown message type: %s", msg.Type)
@@ -128,6 +134,77 @@ func (e *Execution) handleStartMsg(conn *websocket.Conn) error {
 	}
 
 	e.Phase = PhaseQuestion
+
+	// Broadcast the new quiz state
+	if err := e.broadcastQuizState(); err != nil {
+		log.Error().Err(err).Msg("Failed to broadcast quiz state")
+		return fmt.Errorf("broadcast quiz state: %w", err)
+	}
+
+	return nil
+}
+
+func (e *Execution) handleFinishQuestionMsg(conn *websocket.Conn) error {
+	if e.HostConn != conn {
+		log.Error().Msg("Only the host can finish a question")
+		return fmt.Errorf("only the host can finish a question")
+	}
+
+	e.Phase = PhaseResults
+	e.CurrentQuestion++
+
+	// Broadcast the new quiz state
+	if err := e.broadcastQuizState(); err != nil {
+		log.Error().Err(err).Msg("Failed to broadcast quiz state")
+		return fmt.Errorf("broadcast quiz state: %w", err)
+	}
+
+	return nil
+}
+
+func (e *Execution) handleNextQuestionMsg(conn *websocket.Conn) error {
+	if e.HostConn != conn {
+		log.Error().Msg("Only the host can move to the next question")
+		return fmt.Errorf("only the host can move to the next question")
+	}
+
+	e.Phase = PhaseQuestion
+
+	// Broadcast the new quiz state
+	if err := e.broadcastQuizState(); err != nil {
+		log.Error().Err(err).Msg("Failed to broadcast quiz state")
+		return fmt.Errorf("broadcast quiz state: %w", err)
+	}
+
+	return nil
+}
+
+func (e *Execution) handleAnswerQuestionMsg(_ *websocket.Conn, msg Message) error {
+	data, ok := msg.Data.(map[string]interface{})
+	if !ok {
+		log.Error().Msgf("Failed to parse data, expected map[string]string, got %T", msg.Data)
+		return fmt.Errorf("parse data: expected map[string]string, got %T", msg.Data)
+	}
+
+	participantId, ok := data["id"]
+	if !ok {
+		log.Error().Msg("Participant ID not provided")
+		return fmt.Errorf("participant ID not provided")
+	}
+
+	participant, ok := e.getParticipant(participantId.(string))
+	if !ok {
+		log.Error().Msg("Participant not found")
+		return fmt.Errorf("participant not found")
+	}
+
+	answer, ok := data["answer"]
+	if !ok {
+		log.Error().Msg("Answer not provided")
+		return fmt.Errorf("answer not provided")
+	}
+
+	participant.Answers[e.Questions[e.CurrentQuestion].ID] = answer.(string)
 
 	// Broadcast the new quiz state
 	if err := e.broadcastQuizState(); err != nil {
@@ -220,13 +297,17 @@ func (e *Execution) getHostQuestionPayload() (interface{}, error) {
 
 func (e *Execution) getHostResultsPayload() (interface{}, error) {
 	payload := struct {
-		NrQuestions int `json:"nrQuestions"`
-		Results     []struct {
+		Phase                string `json:"phase"`
+		NrQuestionsCompleted int    `json:"nrQuestionsCompleted"`
+		TotalQuestions       int    `json:"totalQuestions"`
+		Results              []struct {
 			Name      string `json:"name"`
 			NrCorrect int    `json:"nrCorrect"`
 		} `json:"results"`
 	}{
-		NrQuestions: e.CurrentQuestion,
+		Phase:                string(e.Phase),
+		NrQuestionsCompleted: e.CurrentQuestion,
+		TotalQuestions:       len(e.Questions),
 	}
 
 	for _, p := range e.Participants {
@@ -299,7 +380,12 @@ func (e *Execution) getParticipantQuestionPayload() (interface{}, error) {
 }
 
 func (e *Execution) getParticipantResultsPayload() (interface{}, error) {
-	return nil, nil
+	payload := struct {
+		Phase string `json:"phase"`
+	}{
+		Phase: string(e.Phase),
+	}
+	return payload, nil
 }
 
 func (e *Execution) getParticipant(participantId string) (*Participant, bool) {
