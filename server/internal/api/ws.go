@@ -38,7 +38,6 @@ func (s *server) wsHandler() http.Handler {
 			err := e.HandleMessages(conn)
 			if err != nil {
 				log.Error().Err(err).Msg("failed to handle message")
-				// TODO: Handle error
 				break
 			}
 		}

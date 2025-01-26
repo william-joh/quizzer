@@ -1,6 +1,7 @@
 package execution
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -27,6 +28,7 @@ const (
 )
 
 type Execution struct {
+	CreatedAt       time.Time          `json:"createdAt"`
 	Code            string             `json:"id"`
 	Quiz            quizzer.Quiz       `json:"quiz"`
 	Questions       []quizzer.Question `json:"questions"`
@@ -36,6 +38,7 @@ type Execution struct {
 	Phase           Phase         `json:"phase"`
 	CurrentQuestion int           `json:"currentQuestion"`
 	IsDone          bool          `json:"isDone"`
+	done            chan bool
 }
 
 type QuizState struct {
@@ -50,9 +53,55 @@ type Message struct {
 	Data   interface{} `json:"data"`
 }
 
+func (e *Execution) Run() {
+	go func() {
+		ticker := time.NewTicker(time.Second * 2)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-e.done:
+				log.Debug().Msg("Stopping execution")
+				return
+			case <-ticker.C:
+				log.Trace().Msg("Checking for finished questions")
+				if e.Phase != PhaseQuestion {
+					continue
+				}
+
+				// Check if all participants have answered
+				allAnswered := true
+				for _, p := range e.Participants {
+					if _, ok := p.Answers[e.Questions[e.CurrentQuestion].ID]; !ok {
+						allAnswered = false
+						break
+					}
+				}
+
+				if allAnswered {
+					if err := e.handleFinishQuestionMsg(e.HostConn); err != nil {
+						log.Error().Err(err).Msg("Failed to finish question")
+					}
+				}
+			}
+		}
+	}()
+}
+
 func (e *Execution) HandleMessages(conn *websocket.Conn) error {
 	var msg Message
 	if err := conn.ReadJSON(&msg); err != nil {
+		var closeErr *websocket.CloseError
+		if errors.As(err, &closeErr) {
+			log.Debug().Err(closeErr).Msg("Connection closed")
+
+			if err := e.handleCloseMsg(conn); err != nil {
+				log.Error().Err(err).Msg("Failed to handle close message")
+				return fmt.Errorf("handle close message: %w", err)
+			}
+			return nil
+		}
+
 		log.Error().Err(err).Msg("Failed to read message")
 		return fmt.Errorf("read message: %w", err)
 	}
@@ -80,6 +129,28 @@ func (e *Execution) HandleMessages(conn *websocket.Conn) error {
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to handle message")
 		return fmt.Errorf("handle message: %w", err)
+	}
+
+	return nil
+}
+
+func (e *Execution) handleCloseMsg(conn *websocket.Conn) error {
+	log.Debug().Msg("Handling close message")
+	if e.HostConn == conn {
+		return e.handleEndMsg(conn)
+	}
+
+	for i, p := range e.Participants {
+		if p.Conn == conn {
+			e.Participants = append(e.Participants[:i], e.Participants[i+1:]...)
+			break
+		}
+	}
+
+	// Broadcast the new quiz state
+	if err := e.broadcastQuizState(); err != nil {
+		log.Error().Err(err).Msg("Failed to broadcast quiz state")
+		return fmt.Errorf("broadcast quiz state: %w", err)
 	}
 
 	return nil
@@ -179,6 +250,7 @@ func (e *Execution) handleEndMsg(conn *websocket.Conn) error {
 
 	wg.Wait()
 	e.IsDone = true
+	e.done <- true
 
 	return nil
 }
@@ -197,6 +269,11 @@ func (e *Execution) handleFinishQuestionMsg(conn *websocket.Conn) error {
 	if e.HostConn != conn {
 		log.Error().Msg("Only the host can finish a question")
 		return fmt.Errorf("only the host can finish a question")
+	}
+
+	if e.Phase != PhaseQuestion {
+		log.Error().Msg("Not in question phase")
+		return fmt.Errorf("not in question phase")
 	}
 
 	e.Phase = PhaseResults

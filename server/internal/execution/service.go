@@ -45,10 +45,17 @@ func (s *inMemoryService) Run() {
 				log.Debug().Msg("Stopping execution service")
 				return
 			case <-ticker.C:
-				log.Debug().Msg("Checking for done executions")
+				log.Trace().Msg("Checking for done executions")
 				for code, execution := range s.executions {
 					if execution.IsDone {
 						log.Debug().Str("code", code).Msg("Execution is done, cleaning up")
+						execution.Close()
+						delete(s.executions, code)
+					}
+
+					// Check if the execution was created more than 1 hour ago and if so, clean it up
+					if time.Since(execution.CreatedAt) > time.Hour {
+						log.Debug().Str("code", code).Msg("Execution is older than 1 hour, cleaning up")
 						execution.Close()
 						delete(s.executions, code)
 					}
@@ -66,6 +73,7 @@ func (s *inMemoryService) CreateExecution(ctx context.Context, quizId string, ho
 	execution := Execution{
 		Phase:           PhaseLobby,
 		CurrentQuestion: 0,
+		CreatedAt:       time.Now(),
 	}
 	for i := range 100 {
 		code := generateCode()
@@ -105,6 +113,7 @@ func (s *inMemoryService) CreateExecution(ctx context.Context, quizId string, ho
 	}
 
 	s.executions[execution.Code] = &execution
+	execution.Run()
 	return execution.Code, nil
 }
 
