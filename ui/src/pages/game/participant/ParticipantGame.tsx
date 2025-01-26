@@ -4,6 +4,7 @@ import { GameInfo } from "../GameInfo";
 import { ParticipantQuestionPhase } from "./ParticipantQuestionPhase";
 import { Participant } from "../GamePage";
 import { ParticipantResultsPhase } from "./ParticipantResultsPhase";
+import { ParticipantLobby } from "./ParticipantLobby";
 
 interface ParticipantGameProps {
   ws: WebSocket;
@@ -62,7 +63,7 @@ export function ParticipantGame({
     <div>
       <GameInfo quizInfo={quizInfo} />
 
-      {phase == "lobby" && <div>Waiting for host to start game...</div>}
+      {phase == "lobby" && <ParticipantLobby />}
 
       {phase == "question" && (
         <ParticipantQuestionPhase

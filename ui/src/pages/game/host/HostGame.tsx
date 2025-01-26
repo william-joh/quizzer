@@ -47,7 +47,7 @@ export function HostGame({ ws, initialQuizInfo }: HostGameProps) {
           setQuestion({
             question: data.question,
             options: data.options,
-            timeLimit: data?.timeLimit || 5,
+            timeLimit: data?.timeLimit || 15,
           });
           break;
         case "results":

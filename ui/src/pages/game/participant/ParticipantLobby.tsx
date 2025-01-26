@@ -1,14 +1,29 @@
-export function ParticipantLobby({ participants }: { participants: string[] }) {
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useParams } from "react-router";
+
+export function ParticipantLobby() {
+  const { code } = useParams();
+
   return (
-    <div className="mt-4">
-      <h2 className="text-xl font-semibold mb-2">Players in Lobby</h2>
-      <ul className="flex flex-wrap gap-2">
-        {participants.map((participant, index) => (
-          <li key={index} className="px-4 py-2 bg-secondary rounded-lg">
-            {participant}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Card className="mt-4">
+      <CardHeader className="pb-2">
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-muted-foreground">Game Code:</span>
+          <span className="font-mono bg-secondary px-3 py-1 rounded-md font-medium">
+            {code}
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent className="py-12">
+        <div className="text-center space-y-2">
+          <h2 className="text-xl font-semibold tracking-tight">
+            Waiting for host
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            The game will begin shortly...
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

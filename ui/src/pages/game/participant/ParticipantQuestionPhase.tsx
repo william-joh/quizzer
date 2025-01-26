@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useState } from "react";
 
 export function ParticipantQuestionPhase({
@@ -16,24 +17,32 @@ export function ParticipantQuestionPhase({
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-8">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold">Select An Option</h2>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        {options.map((option, index) => (
-          <Button
-            key={index}
-            onClick={() => handleOptionSelect(option)}
-            variant={selectedOption === option ? "default" : "secondary"}
-            className="p-6 h-auto text-xl"
-            disabled={selectedOption !== null}
-          >
-            {option}
-          </Button>
-        ))}
-      </div>
-    </div>
+    <Card className="mt-4">
+      <CardHeader>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          Choose your answer
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Select one of the options below
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {options.map((option, index) => (
+            <Button
+              key={index}
+              onClick={() => handleOptionSelect(option)}
+              variant={selectedOption === option ? "default" : "outline"}
+              className={`p-8 h-auto text-lg font-medium transition-all ${
+                selectedOption === option ? "ring-2 ring-primary" : ""
+              }`}
+              disabled={selectedOption !== null}
+            >
+              {option}
+            </Button>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

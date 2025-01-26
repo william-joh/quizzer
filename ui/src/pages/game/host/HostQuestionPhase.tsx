@@ -1,3 +1,4 @@
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import { HostQuestion } from "./HostGame";
 
@@ -24,25 +25,34 @@ export function HostQuestionPhase({
   }, [timeLeft, onTimeUp]);
 
   return (
-    <div className="max-w-4xl mx-auto mt-8">
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold">Question</h2>
-        <div className="text-4xl font-mono bg-secondary px-6 py-3 rounded-lg">
+    <Card className="mt-4">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="space-y-1.5">
+          <h2 className="text-2xl font-semibold tracking-tight">Question</h2>
+          <p className="text-sm text-muted-foreground">
+            Time remaining to answer
+          </p>
+        </div>
+        <div className="text-3xl font-mono font-medium bg-secondary px-4 py-2 rounded-md">
           {timeLeft}s
         </div>
-      </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="rounded-lg border bg-card p-6">
+          <p className="text-xl">{question.question}</p>
+        </div>
 
-      <div className="bg-card p-6 rounded-lg shadow-lg mb-8">
-        <p className="text-2xl">{question.question}</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        {question.options.map((option, index) => (
-          <div key={index} className="bg-secondary p-6 rounded-lg text-xl">
-            {option}
-          </div>
-        ))}
-      </div>
-    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {question.options.map((option, index) => (
+            <div
+              key={index}
+              className="p-6 rounded-lg bg-secondary/50 text-lg font-medium"
+            >
+              {option}
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
