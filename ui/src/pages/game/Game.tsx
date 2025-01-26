@@ -48,9 +48,17 @@ export function Game({ participant }: { participant: Participant }) {
         throw new Error("Unknown phase");
       }
     };
-    ws.current.onclose = () => {
-      console.log("Disconnected from game");
-      setConnectionError(true);
+    ws.current.onclose = (event) => {
+      console.log(
+        "Disconnected from game",
+        event.wasClean,
+        event.code,
+        event.reason
+      );
+      // wasClean will be true if the connection was closed properly (e.g., client called close())
+      // code 1000 indicates normal closure
+      const isClientSideClosure = event.wasClean && event.code === 1000;
+      setConnectionError(!isClientSideClosure);
     };
 
     // return () => {

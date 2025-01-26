@@ -70,7 +70,7 @@ export function HostResultsPhase({
             onClick={onContinue}
             variant={isLastQuestion ? "secondary" : "default"}
           >
-            {isLastQuestion ? "Finish Quiz" : "Next Question"}
+            {isLastQuestion ? "End Quiz" : "Next Question"}
           </Button>
         </div>
       </CardContent>

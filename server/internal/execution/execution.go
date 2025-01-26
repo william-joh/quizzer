@@ -62,6 +62,8 @@ func (e *Execution) HandleMessages(conn *websocket.Conn) error {
 		err = e.handleJoinMsg(conn, msg)
 	case "Start":
 		err = e.handleStartMsg(conn)
+	case "End":
+		err = e.handleEndMsg(conn)
 	case "FinishQuestion":
 		err = e.handleFinishQuestionMsg(conn)
 	case "NextQuestion":
@@ -103,19 +105,18 @@ func (e *Execution) handleJoinMsg(conn *websocket.Conn, msg Message) error {
 	if participantId == e.Host.ID {
 		e.HostConn = conn
 	} else {
-		_, ok := e.getParticipant(participantId.(string))
-		if !ok {
-			participant := Participant{
-				Conn:    conn,
-				ID:      participantId.(string),
-				Name:    username.(string),
-				Answers: make(map[string]string),
-			}
-			e.Participants = append(e.Participants, participant)
+		if _, ok := e.getParticipant(participantId.(string)); ok {
+			log.Error().Msg("Participant already joined")
+			return fmt.Errorf("participant already joined")
 		}
 
-		log.Error().Msg("Participant already joined")
-		// TODO: return fmt.Errorf("participant already joined")
+		participant := Participant{
+			Conn:    conn,
+			ID:      participantId.(string),
+			Name:    username.(string),
+			Answers: make(map[string]string),
+		}
+		e.Participants = append(e.Participants, participant)
 	}
 
 	// Broadcast the new quiz state
@@ -144,6 +145,25 @@ func (e *Execution) handleStartMsg(conn *websocket.Conn) error {
 	return nil
 }
 
+func (e *Execution) handleEndMsg(conn *websocket.Conn) error {
+	if e.HostConn != conn {
+		log.Error().Msg("Only the host can end the quiz")
+		return fmt.Errorf("only the host can end the quiz")
+	}
+
+	for _, participant := range e.Participants {
+		if err := participant.Conn.Close(); err != nil {
+			log.Error().Err(err).Msg("Failed to close participant connection")
+		}
+	}
+
+	if err := e.HostConn.Close(); err != nil {
+		log.Error().Err(err).Msg("Failed to close host connection")
+	}
+
+	return nil
+}
+
 func (e *Execution) handleFinishQuestionMsg(conn *websocket.Conn) error {
 	if e.HostConn != conn {
 		log.Error().Msg("Only the host can finish a question")
@@ -166,6 +186,11 @@ func (e *Execution) handleNextQuestionMsg(conn *websocket.Conn) error {
 	if e.HostConn != conn {
 		log.Error().Msg("Only the host can move to the next question")
 		return fmt.Errorf("only the host can move to the next question")
+	}
+
+	if e.CurrentQuestion >= len(e.Questions)-1 {
+		log.Error().Msg("No more questions to show")
+		return fmt.Errorf("no more questions to show")
 	}
 
 	e.Phase = PhaseQuestion
