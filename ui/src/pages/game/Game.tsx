@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { Participant } from "./GamePage";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
@@ -15,6 +15,7 @@ export interface QuizInfo {
 
 export function Game({ participant }: { participant: Participant }) {
   console.log("Participant", participant);
+  const navigate = useNavigate();
   const { code } = useParams();
 
   const [quizInfo, setQuizInfo] = useState<QuizInfo | null>(null);
@@ -57,8 +58,15 @@ export function Game({ participant }: { participant: Participant }) {
       );
       // wasClean will be true if the connection was closed properly (e.g., client called close())
       // code 1000 indicates normal closure
-      const isClientSideClosure = event.wasClean && event.code === 1000;
-      setConnectionError(!isClientSideClosure);
+      const isGameEnd =
+        event.wasClean && event.code === 1000 && event.reason === "QUIZ_END";
+      if (isGameEnd) {
+        // Navigate to the home page with react-router
+        navigate("/");
+        return;
+      }
+
+      setConnectionError(true);
     };
 
     // return () => {

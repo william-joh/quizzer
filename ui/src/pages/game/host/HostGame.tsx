@@ -74,6 +74,14 @@ export function HostGame({ ws, initialQuizInfo }: HostGameProps) {
   };
 
   const nextQuestion = () => {
+    if (
+      results != null &&
+      results.nrQuestionsCompleted === results.totalQuestions
+    ) {
+      ws.send(`{ "type": "End" }`);
+      return;
+    }
+
     ws.send(`{ "type": "NextQuestion" }`);
   };
 

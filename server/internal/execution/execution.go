@@ -3,6 +3,8 @@ package execution
 import (
 	"fmt"
 	"slices"
+	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/rs/zerolog/log"
@@ -33,6 +35,7 @@ type Execution struct {
 	Participants    []Participant `json:"participants"`
 	Phase           Phase         `json:"phase"`
 	CurrentQuestion int           `json:"currentQuestion"`
+	IsDone          bool          `json:"isDone"`
 }
 
 type QuizState struct {
@@ -53,8 +56,7 @@ func (e *Execution) HandleMessages(conn *websocket.Conn) error {
 		log.Error().Err(err).Msg("Failed to read message")
 		return fmt.Errorf("read message: %w", err)
 	}
-
-	fmt.Println("Received message:", msg)
+	log.Debug().Any("msg", msg).Msg("Received message")
 
 	var err error
 	switch msg.Type {
@@ -81,6 +83,15 @@ func (e *Execution) HandleMessages(conn *websocket.Conn) error {
 	}
 
 	return nil
+}
+
+func (e *Execution) Close() {
+	log.Debug().Msg("Closing execution")
+	for _, p := range e.Participants {
+		p.Conn.Close()
+	}
+
+	e.HostConn.Close()
 }
 
 func (e *Execution) handleJoinMsg(conn *websocket.Conn, msg Message) error {
@@ -151,17 +162,35 @@ func (e *Execution) handleEndMsg(conn *websocket.Conn) error {
 		return fmt.Errorf("only the host can end the quiz")
 	}
 
+	var wg sync.WaitGroup
 	for _, participant := range e.Participants {
-		if err := participant.Conn.Close(); err != nil {
-			log.Error().Err(err).Msg("Failed to close participant connection")
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			sendWsClose(participant.Conn)
+		}()
 	}
 
-	if err := e.HostConn.Close(); err != nil {
-		log.Error().Err(err).Msg("Failed to close host connection")
-	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		sendWsClose(e.HostConn)
+	}()
+
+	wg.Wait()
+	e.IsDone = true
 
 	return nil
+}
+
+func sendWsClose(conn *websocket.Conn) {
+	log.Debug().Msg("Closing connection")
+	if err := conn.WriteControl(
+		websocket.CloseMessage,
+		websocket.FormatCloseMessage(websocket.CloseNormalClosure, "QUIZ_END"),
+		time.Now().Add(time.Second*5)); err != nil {
+		log.Error().Err(err).Msg("Failed to send close message")
+	}
 }
 
 func (e *Execution) handleFinishQuestionMsg(conn *websocket.Conn) error {
@@ -188,7 +217,7 @@ func (e *Execution) handleNextQuestionMsg(conn *websocket.Conn) error {
 		return fmt.Errorf("only the host can move to the next question")
 	}
 
-	if e.CurrentQuestion >= len(e.Questions)-1 {
+	if e.CurrentQuestion >= len(e.Questions) {
 		log.Error().Msg("No more questions to show")
 		return fmt.Errorf("no more questions to show")
 	}

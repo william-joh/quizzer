@@ -5,28 +5,61 @@ import (
 	"errors"
 	"math/rand"
 	"strconv"
+	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/william-joh/quizzer/server/internal/postgres"
 )
 
 type Service interface {
 	CreateExecution(ctx context.Context, quizId string, hostId string) (string, error)
 	GetExecution(ctx context.Context, code string) (*Execution, error)
+
+	Run()
+	Stop()
 }
 
 func NewInMemory(db postgres.Database) Service {
-	return &inMemoryService{db: db, executions: map[string]*Execution{}}
+	return &inMemoryService{
+		db:         db,
+		executions: map[string]*Execution{},
+		done:       make(chan bool),
+	}
 }
 
 type inMemoryService struct {
 	db         postgres.Database
 	executions map[string]*Execution
+	done       chan bool
 }
 
-func generateCode() string {
-	// Generate a random number between 100000 and 999999
-	num := rand.Intn(900000) + 100000
-	return strconv.Itoa(num)
+// Run is a method that should periodically check if there are any executions that are done and if so, clean them up.
+func (s *inMemoryService) Run() {
+	go func() {
+		ticker := time.NewTicker(time.Second * 10)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-s.done:
+				log.Debug().Msg("Stopping execution service")
+				return
+			case <-ticker.C:
+				log.Debug().Msg("Checking for done executions")
+				for code, execution := range s.executions {
+					if execution.IsDone {
+						log.Debug().Str("code", code).Msg("Execution is done, cleaning up")
+						execution.Close()
+						delete(s.executions, code)
+					}
+				}
+			}
+		}
+	}()
+}
+
+func (s *inMemoryService) Stop() {
+	s.done <- true
 }
 
 func (s *inMemoryService) CreateExecution(ctx context.Context, quizId string, hostId string) (string, error) {
@@ -81,4 +114,10 @@ func (s *inMemoryService) GetExecution(ctx context.Context, code string) (*Execu
 		return nil, errors.New("execution not found")
 	}
 	return execution, nil
+}
+
+func generateCode() string {
+	// Generate a random number between 100000 and 999999
+	num := rand.Intn(900000) + 100000
+	return strconv.Itoa(num)
 }

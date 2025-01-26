@@ -19,7 +19,11 @@ func main() {
 	defer db.Close()
 
 	executioner := execution.NewInMemory(db)
+	executioner.Run()
+	defer executioner.Stop()
 
 	api := api.NewAPI(db, executioner)
-	api.Run()
+	if err := api.Run(); err != nil {
+		log.Panic().Err(err).Msg("failed to run api")
+	}
 }

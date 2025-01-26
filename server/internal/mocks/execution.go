@@ -14,6 +14,14 @@ type ExecutionService struct {
 	mock.Mock
 }
 
+func (m *ExecutionService) Run() {
+	m.Called()
+}
+
+func (m *ExecutionService) Stop() {
+	m.Called()
+}
+
 func (m *ExecutionService) CreateExecution(ctx context.Context, quizId string, hostId string) (string, error) {
 	args := m.Called(ctx, quizId, hostId)
 	return args.String(0), args.Error(1)
